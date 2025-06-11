@@ -15,7 +15,7 @@ const PolarPlot: React.FC = () => {
     // Generate points for the function (1 + (xi - 2)*cos(phi)^2)^2/(xi^2 - xi + 1)
     // Using radians from 0 to 2π with higher resolution
     for (let phi = 0; phi <= 2 * Math.PI; phi += 0.01) {
-      const cosPhiSquared = Math.pow(Math.cos(phi), 2);
+      const cosPhiSquared = Math.pow(Math.cos(phi - Math.PI / 2), 2);
       const numerator = Math.pow(1 + (xi - 2) * cosPhiSquared, 2);
       const denominator = Math.pow(xi, 2) - xi + 1;
       const radius = numerator / denominator;
@@ -54,7 +54,7 @@ const PolarPlot: React.FC = () => {
         <Slider
           value={xi}
           onChange={handleSliderChange}
-          min={1}
+          min={0}
           max={3}
           step={0.01}
           valueLabelDisplay="auto"
@@ -65,6 +65,8 @@ const PolarPlot: React.FC = () => {
         height={600}
         data={data}
         margin={{ top: 20, right: 20, bottom: 20, left: 20 }}
+        startAngle={90}
+        endAngle={-270}
       >
         <PolarAngleAxis 
           dataKey="angle" 
