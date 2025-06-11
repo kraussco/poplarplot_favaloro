@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { PolarAngleAxis, PolarRadiusAxis, RadarChart, Radar } from 'recharts';
-import { Slider, Box, Typography } from '@mui/material';
+import { Slider, Box, Typography, useTheme } from '@mui/material';
 
 interface Point {
   angle: number;
@@ -9,6 +9,7 @@ interface Point {
 
 const PolarPlot: React.FC = () => {
   const [xi, setXi] = useState<number>(2);
+  const theme = useTheme();
 
   const data = useMemo(() => {
     const points: Point[] = [];
@@ -43,12 +44,41 @@ const PolarPlot: React.FC = () => {
   };
 
   return (
-    <Box sx={{ width: '100%', maxWidth: 800, margin: '0 auto', padding: 2 }}>
-      <Typography variant="h5" gutterBottom>
+    <Box 
+      sx={{ 
+        width: '100%', 
+        maxWidth: 800, 
+        margin: '0 auto', 
+        padding: 3,
+        backgroundColor: 'var(--bg-secondary)',
+        borderRadius: 2,
+        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center'
+      }}
+    >
+      <Typography 
+        variant="h5" 
+        gutterBottom 
+        sx={{ 
+          color: 'var(--text-primary)',
+          fontWeight: 500,
+          marginBottom: 3,
+          textAlign: 'center'
+        }}
+      >
         Polar Plot: r = (1 + (ξ - 2)cos²(φ))²/(ξ² - ξ + 1)
       </Typography>
-      <Box sx={{ width: '100%', mb: 2 }}>
-        <Typography gutterBottom>
+      <Box sx={{ width: '100%', mb: 4, px: 2 }}>
+        <Typography 
+          gutterBottom 
+          sx={{ 
+            color: 'var(--text-secondary)',
+            marginBottom: 2,
+            textAlign: 'center'
+          }}
+        >
           Parameter ξ: {xi.toFixed(2)}
         </Typography>
         <Slider
@@ -58,30 +88,45 @@ const PolarPlot: React.FC = () => {
           max={3}
           step={0.01}
           valueLabelDisplay="auto"
+          sx={{
+            color: 'var(--accent)',
+            '& .MuiSlider-thumb': {
+              '&:hover, &.Mui-focusVisible': {
+                boxShadow: '0 0 0 8px rgba(136, 132, 216, 0.16)'
+              }
+            }
+          }}
         />
       </Box>
-      <RadarChart
-        width={600}
-        height={600}
-        data={data}
-        margin={{ top: 20, right: 20, bottom: 20, left: 20 }}
-        startAngle={90}
-        endAngle={-270}
-      >
-        <PolarAngleAxis 
-          dataKey="angle" 
-          tickFormatter={formatAngleTick}
-          tickCount={5}
-        />
-        <PolarRadiusAxis angle={90} domain={[0, 'auto']} />
-        <Radar
-          name="Parametric Plot"
-          dataKey="radius"
-          stroke="#8884d8"
-          fill="none"
-          strokeWidth={2}
-        />
-      </RadarChart>
+      <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+        <RadarChart
+          width={600}
+          height={600}
+          data={data}
+          margin={{ top: 20, right: 20, bottom: 20, left: 20 }}
+          startAngle={90}
+          endAngle={-270}
+        >
+          <PolarAngleAxis 
+            dataKey="angle" 
+            tickFormatter={formatAngleTick}
+            tickCount={5}
+            tick={{ fill: 'var(--text-secondary)' }}
+          />
+          <PolarRadiusAxis 
+            angle={90} 
+            domain={[0, 'auto']} 
+            tick={{ fill: 'var(--text-secondary)' }}
+          />
+          <Radar
+            name="Parametric Plot"
+            dataKey="radius"
+            stroke="var(--accent)"
+            fill="none"
+            strokeWidth={2}
+          />
+        </RadarChart>
+      </Box>
     </Box>
   );
 };
