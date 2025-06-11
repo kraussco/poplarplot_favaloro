@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { PolarAngleAxis, PolarRadiusAxis, RadarChart, Radar } from 'recharts';
-import { Slider, Box, Typography, useTheme } from '@mui/material';
+import { Slider, Box, Typography } from '@mui/material';
 
 interface Point {
   angle: number;
@@ -9,7 +9,6 @@ interface Point {
 
 const PolarPlot: React.FC = () => {
   const [xi, setXi] = useState<number>(2);
-  const theme = useTheme();
 
   const data = useMemo(() => {
     const points: Point[] = [];
