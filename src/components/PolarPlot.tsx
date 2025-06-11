@@ -1,6 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { PolarAngleAxis, PolarRadiusAxis, RadarChart, Radar } from 'recharts';
 import { Slider, Box, Typography } from '@mui/material';
+import 'katex/dist/katex.min.css';
+import { InlineMath } from 'react-katex';
 
 interface Point {
   angle: number;
@@ -67,7 +69,7 @@ const PolarPlot: React.FC = () => {
           textAlign: 'center'
         }}
       >
-        Polar Plot: r = (1 + (ξ - 2)cos²(φ))²/(ξ² - ξ + 1)
+        Kernel: <InlineMath math={'4\\mathbf{d} \\cdot \\mathbb{A} \\left[\\mathbf{d}\\right] = \\dfrac{(1 + (\\xi - 2)\\cos^2\\phi)^2}{\\xi^2 - \\xi + 1}'} />
       </Typography>
       <Box sx={{ width: '100%', mb: 4, px: 2 }}>
         <Typography 
@@ -78,7 +80,7 @@ const PolarPlot: React.FC = () => {
             textAlign: 'center'
           }}
         >
-          Parameter ξ: {xi.toFixed(2)}
+          Parameter <InlineMath math={'\\xi'} />: {xi.toFixed(2)}
         </Typography>
         <Slider
           value={xi}
