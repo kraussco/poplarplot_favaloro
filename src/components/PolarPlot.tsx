@@ -8,7 +8,7 @@ interface Point {
 }
 
 const PolarPlot: React.FC = () => {
-  const [xi, setXi] = useState<number>(2);
+  const [xi, setXi] = useState<number>(0.3);
 
   const data = useMemo(() => {
     const points: Point[] = [];
