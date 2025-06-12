@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Slider, Box, Typography } from '@mui/material';
+import 'katex/dist/katex.min.css';
 import { InlineMath } from 'react-katex';
 import * as d3 from 'd3';
 
