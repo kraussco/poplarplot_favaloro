@@ -1,14 +1,14 @@
 import './App.css';
-import PolarPlot from './components/PolarPlot';
+import ContourPlot from './components/ContourPlot';
 
 function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <h1>Interactive Polar Plot</h1>
+        <h1>Interactive Contour Plot</h1>
       </header>
       <main>
-        <PolarPlot />
+        <ContourPlot />
       </main>
     </div>
   );
