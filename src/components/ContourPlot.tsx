@@ -12,6 +12,12 @@ const CX = WIDTH / 2;
 const CY = HEIGHT / 2;
 const N_ANGULAR = 400; // Smoothness of the ring
 
+// Constants for plot
+const PLOT_SIZE = 140; // Size of the plot area
+const PLOT_X_RANGE = 3; // x range from 0 to 3 (matching slider range)
+const PLOT_Y_RANGE = 4; // y range for the kernel ratio
+const PLOT_POINTS = 200; // Number of points to plot
+
 const COLORBAR_WIDTH = 30;
 const COLORBAR_HEIGHT = 300;
 const COLORBAR_X = WIDTH - 80;
@@ -73,8 +79,165 @@ const AnnulusPlot: React.FC = () => {
       .attr('stroke', 'white')
       .attr('stroke-width', 2);
 
-    // Draw colorbar
+    // Create plot group
+    const plotGroup = g.append('g')
+      .attr('transform', `translate(${-PLOT_SIZE/2}, ${-PLOT_SIZE/2})`);
+
+    // Create scales for the plot
+    const xScale = d3.scaleLinear()
+      .domain([0, PLOT_X_RANGE])
+      .range([0, PLOT_SIZE]);
+    
+    const yScale = d3.scaleLinear()
+      .domain([0, PLOT_Y_RANGE])
+      .range([PLOT_SIZE, 0]);
+
+    // Draw grid lines
+    const xGrid = d3.axisBottom(xScale)
+      .ticks(5)
+      .tickSize(-PLOT_SIZE)
+      .tickFormat(() => '');
+    
+    const yGrid = d3.axisLeft(yScale)
+      .ticks(5)
+      .tickSize(-PLOT_SIZE)
+      .tickFormat(() => '');
+
+    plotGroup.append('g')
+      .attr('class', 'x-grid')
+      .attr('transform', `translate(0,${PLOT_SIZE})`)
+      .call(xGrid)
+      .attr('stroke', 'rgba(255,255,255,0.2)')
+      .attr('stroke-width', 0.7);
+
+    plotGroup.append('g')
+      .attr('class', 'y-grid')
+      .call(yGrid)
+      .attr('stroke', 'rgba(255,255,255,0.2)')
+      .attr('stroke-width', 0.7);
+
+    // Draw axes
+    const xAxis = d3.axisBottom(xScale)
+      .ticks(5)
+      .tickFormat(d3.format('.1f'));
+    
+    const yAxis = d3.axisLeft(yScale)
+      .ticks(5)
+      .tickFormat(d3.format('.1f'));
+
+    plotGroup.append('g')
+      .attr('class', 'x-axis')
+      .attr('transform', `translate(0,${PLOT_SIZE})`)
+      .call(xAxis)
+      .attr('stroke', 'white')
+      .attr('stroke-width', 1)
+      .selectAll('text')
+      .attr('fill', 'white')
+      .style('font-size', '10px');
+
+    // Add x-axis label
+    plotGroup.append('text')
+      .attr('x', PLOT_SIZE/2)
+      .attr('y', PLOT_SIZE + 40)
+      .attr('text-anchor', 'middle')
+      .attr('fill', 'white')
+      .style('font-size', '14px')
+      .text('ξ');
+
+    plotGroup.append('g')
+      .attr('class', 'y-axis')
+      .call(yAxis)
+      .attr('stroke', 'white')
+      .attr('stroke-width', 1)
+      .selectAll('text')
+      .attr('fill', 'white')
+      .style('font-size', '10px');
+
+   
+
+    // Add glow effect definition
     const defs = svg.append('defs');
+    const glowFilter = defs.append('filter')
+      .attr('id', 'glow')
+      .attr('x', '-50%')
+      .attr('y', '-50%')
+      .attr('width', '200%')
+      .attr('height', '200%');
+    
+    glowFilter.append('feGaussianBlur')
+      .attr('stdDeviation', '3')
+      .attr('result', 'coloredBlur');
+    
+    const feMerge = glowFilter.append('feMerge');
+    feMerge.append('feMergeNode')
+      .attr('in', 'coloredBlur');
+    feMerge.append('feMergeNode')
+      .attr('in', 'SourceGraphic');
+
+    // Draw quadratic curve
+    const curvePath = d3.path();
+    for (let i = 0; i <= PLOT_POINTS; i++) {
+      const t = i / PLOT_POINTS;
+      const x = t * PLOT_X_RANGE;
+      // Calculate kernel_h and kernel_v
+      const kernel_h = (x * x - 2 * x + 1) / (x * x - x + 1);
+      const kernel_v = 1 / (x * x - x + 1);
+      const y = kernel_h / kernel_v; // This simplifies to (x^2 - 2x + 1)
+      if (i === 0) {
+        curvePath.moveTo(xScale(x), yScale(y));
+      } else {
+        curvePath.lineTo(xScale(x), yScale(y));
+      }
+    }
+    plotGroup.append('path')
+      .attr('d', curvePath.toString())
+      .attr('fill', 'none')
+      .attr('stroke', 'white')
+      .attr('stroke-width', 2)
+      .attr('filter', 'url(#glow)');
+
+    // Add glowing marker
+    const markerX = xScale(xi);
+    const kernel_h = (xi * xi - 2 * xi + 1) / (xi * xi - xi + 1);
+    const kernel_v = 1 / (xi * xi - xi + 1);
+    const markerY = yScale(kernel_h / kernel_v);
+    const currentY = kernel_h / kernel_v;
+
+    // Add marker group
+    const markerGroup = plotGroup.append('g')
+      .attr('transform', `translate(${markerX}, ${markerY})`);
+
+    // Add the glowing circle
+    markerGroup.append('circle')
+      .attr('r', 5)
+      .attr('fill', 'white')
+      .attr('filter', 'url(#glow)');
+
+    // Add the annotation with background
+    const annotation = markerGroup.append('g')
+      .attr('transform', 'translate(15, -15)');
+
+    // Add background rectangle
+    annotation.append('rect')
+      .attr('x', -5)
+      .attr('y', -20)
+      .attr('width', 60)
+      .attr('height', 25)
+      .attr('rx', 4)
+      .attr('fill', 'rgba(0, 0, 0, 0.7)')
+      .attr('stroke', 'white')
+      .attr('stroke-width', 1);
+
+    // Add the text
+    annotation.append('text')
+      .attr('x', 0)
+      .attr('y', 0)
+      .attr('fill', 'white')
+      .style('font-size', '14px')
+      .style('font-family', 'monospace')
+      .text(currentY.toFixed(3));
+
+    // Draw colorbar
     const gradientId = 'colorbar-gradient';
     const gradient = defs.append('linearGradient')
       .attr('id', gradientId)
