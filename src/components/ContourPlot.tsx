@@ -46,21 +46,34 @@ const AnnulusPlot: React.FC = () => {
   useEffect(() => {
     if (containerRef.current) {
       const containerWidth = containerRef.current.clientWidth;
-      const scale = isMobile ? 0.8 : isTablet ? 0.9 : 1;
+      const scale = isMobile ? 0.98 : isTablet ? 0.9 : 1;
       
       WIDTH = Math.min(containerWidth * scale, 700);
-      HEIGHT = WIDTH * 0.85;
-      R_INNER = WIDTH * 0.26;
-      R_OUTER = WIDTH * 0.31;
+      // Reduce height ratio for mobile
+      HEIGHT = isMobile ? WIDTH * 0.7 : WIDTH * 0.85;
+      
+      // Increase annulus size on mobile
+      const annulusScale = isMobile ? 1.1 : 0.8;
+      R_INNER = WIDTH * 0.26 * annulusScale;
+      R_OUTER = WIDTH * 0.31 * annulusScale;
       CX = WIDTH / 2;
       CY = HEIGHT / 2;
-      PLOT_SIZE = WIDTH * 0.2;
       
-      // Update colorbar dimensions
-      COLORBAR_WIDTH = WIDTH * 0.04;
-      COLORBAR_HEIGHT = HEIGHT * 0.5;
-      COLORBAR_X = WIDTH - (WIDTH * 0.12);
-      COLORBAR_Y = HEIGHT * 0.2;
+      // Increase plot size on mobile
+      PLOT_SIZE = isMobile ? WIDTH * 0.3 : WIDTH * 0.2;
+      
+      // Update colorbar dimensions based on screen size
+      if (isMobile) {
+        COLORBAR_WIDTH = WIDTH * 0.6;
+        COLORBAR_HEIGHT = 15;
+        COLORBAR_X = (WIDTH - COLORBAR_WIDTH) / 2;
+        COLORBAR_Y = HEIGHT + 45;
+      } else {
+        COLORBAR_WIDTH = WIDTH * 0.04;
+        COLORBAR_HEIGHT = HEIGHT * 0.5;
+        COLORBAR_X = WIDTH - (WIDTH * 0.12);
+        COLORBAR_Y = HEIGHT * 0.2;
+      }
     }
   }, [isMobile, isTablet]);
 
@@ -273,14 +286,18 @@ const AnnulusPlot: React.FC = () => {
     const gradientId = 'colorbar-gradient';
     const gradient = defs.append('linearGradient')
       .attr('id', gradientId)
-      .attr('x1', '0%').attr('y1', '100%')
-      .attr('x2', '0%').attr('y2', '0%');
+      .attr('x1', isMobile ? '0%' : '0%')
+      .attr('y1', isMobile ? '0%' : '100%')
+      .attr('x2', isMobile ? '100%' : '0%')
+      .attr('y2', isMobile ? '0%' : '0%');
+    
     for (let i = 0; i <= 100; ++i) {
       const t = i / 100;
       gradient.append('stop')
         .attr('offset', `${t * 100}%`)
         .attr('stop-color', plasma(t));
     }
+    
     svg.append('rect')
       .attr('x', COLORBAR_X)
       .attr('y', COLORBAR_Y)
@@ -289,15 +306,24 @@ const AnnulusPlot: React.FC = () => {
       .attr('fill', `url(#${gradientId})`)
       .attr('stroke', 'black')
       .attr('stroke-width', 1);
+
     // Colorbar axis
     const scale = d3.scaleLinear()
       .domain([minValue, maxValue])
-      .range([COLORBAR_Y + COLORBAR_HEIGHT, COLORBAR_Y]);
-    const axis = d3.axisRight(scale)
-      .ticks(5)
-      .tickFormat(d3.format(".2f"));
+      .range(isMobile ? [COLORBAR_X, COLORBAR_X + COLORBAR_WIDTH] : [COLORBAR_Y + COLORBAR_HEIGHT, COLORBAR_Y]);
+    
+    const axis = isMobile 
+      ? d3.axisBottom(scale)
+          .ticks(5)
+          .tickFormat(d3.format(".2f"))
+      : d3.axisRight(scale)
+          .ticks(5)
+          .tickFormat(d3.format(".2f"));
+
     svg.append('g')
-      .attr('transform', `translate(${COLORBAR_X + COLORBAR_WIDTH},0)`)
+      .attr('transform', isMobile 
+        ? `translate(0,${COLORBAR_Y + COLORBAR_HEIGHT})`
+        : `translate(${COLORBAR_X + COLORBAR_WIDTH},0)`)
       .call(axis)
       .selectAll('text')
       .style('fill', 'var(--text-primary)')
@@ -315,13 +341,14 @@ const AnnulusPlot: React.FC = () => {
         width: '100%', 
         maxWidth: '100%', 
         margin: '0 auto', 
-        padding: { xs: 1, sm: 2, md: 3 },
+        padding: { xs: 0.5, sm: 2, md: 3 },
         backgroundColor: 'var(--bg-secondary)',
         borderRadius: 2,
         boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
         display: 'flex',
         flexDirection: 'column',
-        alignItems: 'center'
+        alignItems: 'center',
+        gap: { xs: 0.5, sm: 1, md: 2 }
       }}
     >
       <Typography 
@@ -330,19 +357,19 @@ const AnnulusPlot: React.FC = () => {
         sx={{ 
           color: 'var(--text-primary)',
           fontWeight: 500,
-          marginBottom: { xs: 2, sm: 3 },
+          marginBottom: { xs: 0.5, sm: 1 },
           textAlign: 'center',
           fontSize: { xs: '1.2rem', sm: '1.5rem', md: '1.8rem' }
         }}
       >
         Annulus Color Mapping: <InlineMath math={'r = \\frac{(1 + (\\xi - 2)\\cos^2\\phi)^2}{\\xi^2 - \\xi + 1}'} />
       </Typography>
-      <Box sx={{ width: '100%', mb: { xs: 2, sm: 3, md: 4 }, px: { xs: 1, sm: 2 } }}>
+      <Box sx={{ width: '100%', mb: { xs: 0.5, sm: 1, md: 1.5 }, px: { xs: 1, sm: 2 } }}>
         <Typography 
           gutterBottom 
           sx={{ 
             color: 'var(--text-secondary)',
-            marginBottom: { xs: 1, sm: 2 },
+            marginBottom: { xs: 0.5, sm: 1 },
             textAlign: 'center',
             fontSize: { xs: '0.9rem', sm: '1rem', md: '1.1rem' }
           }}
@@ -366,7 +393,12 @@ const AnnulusPlot: React.FC = () => {
           }}
         />
       </Box>
-      <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        width: '100%',
+        height: isMobile ? 'auto' : 'auto'
+      }}>
         <svg ref={svgRef} style={{ maxWidth: '100%', height: 'auto' }} />
       </Box>
     </Box>
