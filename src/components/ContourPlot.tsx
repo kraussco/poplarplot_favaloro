@@ -1,27 +1,29 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Slider, Box, Typography } from '@mui/material';
+import { Slider, Box, Typography, useTheme, useMediaQuery } from '@mui/material';
 import 'katex/dist/katex.min.css';
 import { InlineMath } from 'react-katex';
 import * as d3 from 'd3';
 
-const WIDTH = 700;
-const HEIGHT = 600;
-const R_INNER = 180;
-const R_OUTER = 220;
-const CX = WIDTH / 2;
-const CY = HEIGHT / 2;
+// Constants that will be calculated dynamically
+let WIDTH = 700;
+let HEIGHT = 600;
+let R_INNER = 180;
+let R_OUTER = 220;
+let CX = WIDTH / 2;
+let CY = HEIGHT / 2;
 const N_ANGULAR = 400; // Smoothness of the ring
 
 // Constants for plot
-const PLOT_SIZE = 140; // Size of the plot area
+let PLOT_SIZE = 140; // Size of the plot area
 const PLOT_X_RANGE = 3; // x range from 0 to 3 (matching slider range)
 const PLOT_Y_RANGE = 4; // y range for the kernel ratio
 const PLOT_POINTS = 200; // Number of points to plot
 
-const COLORBAR_WIDTH = 30;
-const COLORBAR_HEIGHT = 300;
-const COLORBAR_X = WIDTH - 80;
-const COLORBAR_Y = 120;
+// Colorbar constants
+let COLORBAR_WIDTH = 30;
+let COLORBAR_HEIGHT = 300;
+let COLORBAR_X = WIDTH - 80;
+let COLORBAR_Y = 120;
 
 const plasma = d3.interpolatePlasma;
 
@@ -35,11 +37,41 @@ const calculateValue = (xi: number, theta: number) => {
 const AnnulusPlot: React.FC = () => {
   const [xi, setXi] = useState<number>(0.3);
   const svgRef = useRef<SVGSVGElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isTablet = useMediaQuery(theme.breakpoints.down('md'));
+
+  // Update dimensions based on screen size
+  useEffect(() => {
+    if (containerRef.current) {
+      const containerWidth = containerRef.current.clientWidth;
+      const scale = isMobile ? 0.8 : isTablet ? 0.9 : 1;
+      
+      WIDTH = Math.min(containerWidth * scale, 700);
+      HEIGHT = WIDTH * 0.85;
+      R_INNER = WIDTH * 0.26;
+      R_OUTER = WIDTH * 0.31;
+      CX = WIDTH / 2;
+      CY = HEIGHT / 2;
+      PLOT_SIZE = WIDTH * 0.2;
+      
+      // Update colorbar dimensions
+      COLORBAR_WIDTH = WIDTH * 0.04;
+      COLORBAR_HEIGHT = HEIGHT * 0.5;
+      COLORBAR_X = WIDTH - (WIDTH * 0.12);
+      COLORBAR_Y = HEIGHT * 0.2;
+    }
+  }, [isMobile, isTablet]);
 
   useEffect(() => {
     if (!svgRef.current) return;
     const svg = d3.select(svgRef.current);
     svg.selectAll('*').remove();
+
+    // Set SVG dimensions
+    svg.attr('width', WIDTH)
+       .attr('height', HEIGHT);
 
     // Compute all values for this xi
     const values: number[] = [];
@@ -269,8 +301,8 @@ const AnnulusPlot: React.FC = () => {
       .call(axis)
       .selectAll('text')
       .style('fill', 'var(--text-primary)')
-      .style('font-size', '16px');
-  }, [xi]);
+      .style('font-size', `${Math.max(10, WIDTH * 0.015)}px`);
+  }, [xi, isMobile, isTablet]);
 
   const handleSliderChange = (_event: Event, newValue: number | number[]) => {
     setXi(newValue as number);
@@ -278,11 +310,12 @@ const AnnulusPlot: React.FC = () => {
 
   return (
     <Box 
+      ref={containerRef}
       sx={{ 
-        width: WIDTH, 
-        maxWidth: WIDTH, 
+        width: '100%', 
+        maxWidth: '100%', 
         margin: '0 auto', 
-        padding: 3,
+        padding: { xs: 1, sm: 2, md: 3 },
         backgroundColor: 'var(--bg-secondary)',
         borderRadius: 2,
         boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
@@ -297,19 +330,21 @@ const AnnulusPlot: React.FC = () => {
         sx={{ 
           color: 'var(--text-primary)',
           fontWeight: 500,
-          marginBottom: 3,
-          textAlign: 'center'
+          marginBottom: { xs: 2, sm: 3 },
+          textAlign: 'center',
+          fontSize: { xs: '1.2rem', sm: '1.5rem', md: '1.8rem' }
         }}
       >
         Annulus Color Mapping: <InlineMath math={'r = \\frac{(1 + (\\xi - 2)\\cos^2\\phi)^2}{\\xi^2 - \\xi + 1}'} />
       </Typography>
-      <Box sx={{ width: '100%', mb: 4, px: 2 }}>
+      <Box sx={{ width: '100%', mb: { xs: 2, sm: 3, md: 4 }, px: { xs: 1, sm: 2 } }}>
         <Typography 
           gutterBottom 
           sx={{ 
             color: 'var(--text-secondary)',
-            marginBottom: 2,
-            textAlign: 'center'
+            marginBottom: { xs: 1, sm: 2 },
+            textAlign: 'center',
+            fontSize: { xs: '0.9rem', sm: '1rem', md: '1.1rem' }
           }}
         >
           Parameter <InlineMath math={'\\xi'} />: {xi.toFixed(2)}
@@ -332,7 +367,7 @@ const AnnulusPlot: React.FC = () => {
         />
       </Box>
       <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
-        <svg ref={svgRef} width={WIDTH} height={HEIGHT} />
+        <svg ref={svgRef} style={{ maxWidth: '100%', height: 'auto' }} />
       </Box>
     </Box>
   );
